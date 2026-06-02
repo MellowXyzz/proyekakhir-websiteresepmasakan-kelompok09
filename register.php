@@ -1,0 +1,143 @@
+<?php
+include 'koneksi.php';
+
+$pesan = "";
+if (isset($_POST['register'])) {
+    $username = trim($_POST['name']);
+    $email = trim($_POST['email']);
+    $password = $_POST['pass'];
+    $role = 'user';
+
+    if (!empty($username) && !empty($email) && !empty($password)) {
+
+        // Cek username sudah ada
+        $stmt_cek = $koneksi->prepare("SELECT username FROM users WHERE username = ? OR email = ?");
+        $stmt_cek->bind_param("ss", $username, $email);
+        $stmt_cek->execute();
+        $result_cek = $stmt_cek->get_result();
+
+        if ($result_cek->num_rows > 0) {
+            $pesan = "<p class='text-red-500 font-[fredoka] mb-4'>Username atau email sudah digunakan.</p>";
+        } else {
+            $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+
+            $stmt = $koneksi->prepare("INSERT INTO users (username, email, password, role) VALUES (?, ?, ?, ?)");
+            $stmt->bind_param("ssss", $username, $email, $hashed_password, $role);
+
+            if ($stmt->execute()) {
+                $pesan = "<script>alert('Registrasi berhasil! Silahkan login.'); window.location='login.php';</script>";
+            } else {
+                $pesan = "<p class='text-red-500 font-[fredoka] mb-4'>Terjadi kesalahan saat registrasi.</p>";
+            }
+        }
+    } else {
+        $pesan = "<p class='text-red-500 font-[fredoka] mb-4'>Semua kolom harus diisi!</p>";
+    }
+}
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Arapey:ital@0;1&family=Fredoka:wght@300..700&family=Hanken+Grotesk:ital,wght@0,100..900;1,100..900&family=Instrument+Serif:ital@0;1&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet">
+    <title>Register-ResepKita</title>
+</head>
+<body class=" bg-[length:300px_auto] bg-center bng-repeat bg-fixed" style="background-image: url('assets/card.png')">
+
+    <div class="flex items-center justify-center min-h-screen shadow-xl">
+        <div class="relative flex flex-col m-6 space-y-8 bg-[#EFE6D5] border-2 border-[#c5b598]  shadow-2xl rounded-2xl md:flex-row md:space-y-0">
+
+            <form action="" method="POST" class="flex flex-col justify-center p-8 md:p-14" onsubmit="return validasi()">
+                
+                <div class="flex items-center gap-3 mb-3">
+                    <img src="./assets/logo.png" alt="Logo" class="w-12 h-12 object-contain" />
+                    <span class="text-4xl font-[arapey] text-yellow-950 font-bold">Resep Kita</span>
+                </div>
+                
+                <span class="font-light font-[fredoka] text-gray-400 mb-8 text-yellow-950">
+                    Selamat datang di ResepKita, Silahkan Daftar untuk melanjutkan !
+                </span>
+                
+                <!-- Menampilkan Pesan Error / Alert di atas Form -->
+                <?php echo $pesan; ?>
+                
+                <div class="py-4">
+                    <span class="mb-2 font-[fredoka] text-yellow-950 text-md">Username</span>
+                    <input type="text" name="name" id="name"
+    class="w-full p-2 border border-[#c5b598] bg-[#F5EFE4] rounded-full placeholder:font-light placeholder:text-gray-500" />
+
+                </div>
+                <div class="py-4">
+                    <span class="mb-2 font-[fredoka] text-yellow-950 text-md">Email</span>
+                    <input type="email" name="email" id="email"
+    class="w-full p-2 border border-[#c5b598] bg-[#F5EFE4] rounded-full placeholder:font-light placeholder:text-gray-500" />
+
+                </div>
+                <div class="py-4">
+                    <span class="mb-2 font-[fredoka] text-yellow-950 text-md">Password</span>
+                    <input type="password" name="pass" id="pass"
+    class="w-full p-2 border border-[#c5b598] bg-[#F5EFE4] rounded-full placeholder:font-light placeholder:text-gray-500" />
+
+                </div>
+                
+                <button type="submit" name="register"
+                    class="w-full bg-yellow-950 font-[fredoka] text-white p-2 rounded-lg mb-6 hover:bg-[#997d60] hover:text-white hover:border hover:border-gray-300 transition-all">
+                    Daftar Sekarang !
+                </button>
+                
+                <div class="text-center font-[fredoka] text-yellow-500">
+                    Sudah punya akun?
+                    <a href="login.php" class="font-bold text-yellow-950 hover:text-gray-600 transition-colors">Login disini</a>
+                </div>
+            </form>
+
+            <div class="relative">
+                <img src="./assets/iconlogin.jpg" alt="img" class="w-[400px] h-full hidden rounded-r-2xl md:block object-cover" />
+                <div class="absolute hidden bottom-10 right-6 p-6 bg-white bg-opacity-30 backdrop-blur-sm rounded drop-shadow-lg md:block">
+                    <span class="text-white font-[fredoka] text-xl">"Temukan berbagai cita rasa kuliner <br/> nusantara dari berbagai tempat di <br/> seluruh Indonesia"</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+    function validasi() {
+        const username = document.getElementById("name").value.trim();
+        const email = document.getElementById("email").value.trim();
+        const password = document.getElementById("pass").value;
+
+        if (username === "") {
+            alert("Username tidak boleh kosong!");
+            return false;
+        }
+
+        if (username.length < 3) {
+            alert("Username minimal 3 karakter!");
+            return false;
+        }
+
+        if (email === "") {
+            alert("Email tidak boleh kosong!");
+            return false;
+        }
+
+
+        if (password === "") {
+            alert("Password tidak boleh kosong!");
+            return false;
+        }
+
+        if (password.length < 6) {
+            alert("Password minimal 6 karakter!");
+            return false;
+        }
+
+        return true;
+    }
+</script>
+</body>
+</html>

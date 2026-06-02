@@ -1,0 +1,302 @@
+<?php
+session_start();
+include 'koneksi.php';
+
+if (!isset($_SESSION['username'])) {
+    header("Location: login.php");
+    exit();
+}
+
+
+if (isset($_POST['simpan'])) {
+
+
+    $id = $_SESSION['id'];
+    $judul = htmlspecialchars($_POST['judul']);
+    $deskripsi = htmlspecialchars($_POST['deskripsi']);
+    $kategori = $_POST['kategori_daerah'];
+    $bahan = htmlspecialchars($_POST['bahan']);
+    $langkah = htmlspecialchars($_POST['langkah']);
+
+
+    $foto = $_FILES['foto']['name'];
+    $tmp = $_FILES['foto']['tmp_name'];
+
+
+    $folder = "uploads/";
+
+
+    $namaFoto = time() . "_" . $foto;
+
+
+    if (move_uploaded_file($tmp, $folder . $namaFoto)) {
+
+
+        $query = "INSERT INTO resep 
+        (id, judul, deskripsi, kategori_daerah, foto, bahan, langkah)
+        VALUES (?, ?, ?, ?, ?, ?, ?)";
+
+        $stmt = $koneksi->prepare($query);
+
+        $stmt->bind_param(
+            "issssss",
+            $id,
+            $judul,
+            $deskripsi,
+            $kategori,
+            $namaFoto,
+            $bahan,
+            $langkah
+        );
+
+        if ($stmt->execute()) {
+            echo "
+            <script>
+                alert('Resep berhasil ditambahkan!');
+                window.location='index.php';
+            </script>
+            ";
+        } else {
+            echo "Gagal menambahkan resep!";
+        }
+
+        $stmt->close();
+    } else {
+    }
+}
+?>
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Arapey:ital@0;1&family=Fredoka:wght@300..700&family=Hanken+Grotesk:ital,wght@0,100..900;1,100..900&family=Instrument+Serif:ital@0;1&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet">
+
+    <title>Create Resep</title>
+</head>
+
+<body class=" bg-center bg-repeat bg-[length:300px_auto]" style="background-image: url('assets/navbg.jpg')">
+
+
+    <nav
+        class="flex justify-between  z-100 w-full mx-auto rounded- shadow-xl py-5 px-8 border-b border-neutral-900 bg-repeat bg-[length:300px_auto]"
+        style="background-image: url('assets/navbg.jpg')">
+        <img src="assets/mega1.png" alt="" class="absolute right-27 -top-6 w-17 h-12 scale-150 z-100">
+
+        <img src="assets/mega3.png" alt="" class="absolute -left-3 -top-6 w-17 h-12 scale-160 z-100">
+
+
+        <div>
+            <a href="index.php"
+                class="font-bold font-[fredoka] text-3xl text-yellow-950 ">
+
+                Resep Kita
+
+            </a>
+        </div>
+
+        <div class="flex items-center gap-7  ">
+
+            <span class="font-[Fredoka] text-sm text-yellow-950">
+                Halo,
+                <?= htmlspecialchars($_SESSION['username']); ?>
+            </span>
+
+            <a href="logout.php"
+                class="bg-orange-900 text-white px-4 py-2 rounded-full hover:scale-110 hover:bg-yellow-900 font-[Merryweather] duration-300">
+
+                Logout
+
+            </a>
+
+
+
+        </div>
+
+    </nav>
+
+
+
+    <section class=" mt- px-10 py-6 bg-[#EFE6D5] mb-4 border-2 border-[#c5b598] ">
+
+        <h1 class="text-3xl font-bold text-yellow-950 font-[Playfair-Display]">
+            Tambah Resep Baru
+        </h1>
+
+        <p class="text-gray-500 mt-2 font-[Fredoka]">
+            Bagikan resep andalanmu ke semua orang.
+        </p>
+
+    </section>
+
+
+    <section class="mx-10 mb-10 p-6 bg-[#EFE6D5] shadow-2xl rounded-2xl border-2 border-[#c5b598]">
+
+        <form action="" method="POST" enctype="multipart/form-data" class="flex flex-col gap-5" onsubmit="return validasi()">
+
+
+            <div>
+                <label class="block mb-2 font-[Fredoka] font-semibold text-yellow-950">
+                    Foto Masakan
+                </label>
+
+                <input
+                    type="file"
+                    name="foto"
+                    accept="image/*"
+                    id="foto"
+                    class="w-full border border-[#c5b598] bg-[#F5EFE4] ">
+            </div>
+
+
+            <div>
+                <label class="block mb-2 font-[Fredoka] font-semibold text-yellow-950 p-2">
+                    Judul Resep
+                </label>
+
+                <input
+                    type="text"
+                    name="judul"
+                    id="judul"
+                    placeholder="Contoh : Nasi Goreng Jawa"
+                    class="w-full border border-[#c5b598] bg-[#F5EFE4] rounded p-2">
+            </div>
+
+
+            <div>
+                <label class="block mb-2 font-semibold font-[Fredoka] text-yellow-950">
+                    Deskripsi
+                </label>
+
+                <textarea
+                    name="deskripsi"
+                    rows="3"
+                    id="deskripsi"
+                    placeholder="Ceritakan tentang resep anda..."
+                    class="w-full border border-[#c5b598] bg-[#F5EFE4] rounded p-2"></textarea>
+            </div>
+
+
+            <div>
+                <label class="block mb-2 font-semibold font-[Fredoka] text-yellow-950">
+                    Kategori Daerah
+                </label>
+
+                <select
+                    name="kategori_daerah"
+                    id="kategori_daerah"
+                    class="w-full p-2 border border-[#c5b598] bg-[#F5EFE4] rounded">
+
+                    <option value="">Pilih kategori</option>
+                    <option value="Jawa">Jawa</option>
+                    <option value="Sumatera">Sumatera</option>
+                    <option value="Kalimantan">Kalimantan</option>
+                    <option value="Sulawesi">Sulawesi</option>
+                    <option value="Papua">Papua</option>
+                    <option value="Bali">Bali</option>
+                    <option value="Nusa Tenggara">Nusa Tenggara</option>
+                    <option value="Maluku">Maluku</option>
+                    <option value="Lainnya">Lainnya</option>
+
+                </select>
+            </div>
+
+
+            <div>
+                <label class="block mb-2 font-[Fredoka] font-semibold text-yellow-950">
+                    Bahan-Bahan
+                </label>
+
+                <textarea
+                    name="bahan"
+                    id="bahan"
+                    rows="5"
+                    placeholder="Contoh : Bawang putih, garam, ayam..."
+                    class="w-full p-2 border border-[#c5b598] bg-[#F5EFE4] rounded"></textarea>
+            </div>
+
+
+            <div>
+                <label class="block mb-2 font-[Fredoka] font-semibold text-yellow-950">
+                    Langkah-Langkah
+                </label>
+
+                <textarea
+                    name="langkah"
+                    id="langkah"
+                    rows="5"
+                    placeholder="Contoh : Panaskan minyak..."
+                    class="w-full p-2 border border-[#c5b598] bg-[#F5EFE4] rounded"></textarea>
+            </div>
+
+
+            <div class="flex items-center font-[Fredoka] gap-3">
+
+                <a href="index.php"
+                    class="bg-red-700 text-white px-4 py-2 rounded-full hover:scale-110 hover:bg-red-900 font-[Merryweather] duration-300">
+                    Batal
+                </a>
+
+                <button
+                    type="submit"
+                    name="simpan"
+                    class="bg-orange-900 text-white px-4 py-2 rounded-full hover:scale-110 hover:bg-yellow-900 font-[Merryweather] duration-300">
+
+                    Simpan Resep
+
+                </button>
+
+            </div>
+
+        </form>
+
+    </section>
+    <script>
+        console.log("script berhasil dimuat");
+
+        function validasi() {
+            let foto = document.getElementById("foto");
+            let judul = document.getElementById("judul");
+            let deskripsi = document.getElementById("deskripsi");
+            let kategori = document.getElementById("kategori_daerah");
+            let bahan = document.getElementById("bahan");
+            let langkah = document.getElementById("langkah");
+
+            if (foto.files.length === 0) {
+                alert("Foto tidak boleh kosong!");
+                return false;
+            }
+            if (judul.value.trim() === "") {
+                alert("Judul tidak boleh kosong!");
+                return false;
+            }
+            if (deskripsi.value.trim() === "") {
+                alert("Deskripsi tidak boleh kosong!");
+                return false;
+            }
+            if (kategori.value === "") {
+                alert("Kategori harus dipilih!");
+                return false;
+            }
+            if (bahan.value.trim() === "") {
+                alert("Bahan tidak boleh kosong!");
+                return false;
+            }
+            if (langkah.value.trim() === "") {
+                alert("Langkah tidak boleh kosong!");
+                return false;
+            }
+
+            return true;
+        }
+    </script>
+</body>
+
+</html>
